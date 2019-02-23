@@ -23,6 +23,8 @@ services:
     image: "alpine:latest"
     networks:
       - tick_net
+    stdin_open: true
+    tty: true
   grafana:
     build: grafana
     image: "grafana:latest"
