@@ -1,0 +1,66 @@
+version: '3.2'
+
+services:
+  influxdb:
+    build: influxdb
+    image: "influxdb:latest"
+    env_file: configuration.env
+    ports:
+      # The API for InfluxDB is served on port 8086
+      - "8086:8086"
+      - "8082:8082"
+      # UDP Port
+      - "8089:8089"
+    networks:
+      - tick_net
+    volumes:
+      # Mount for influxdb data directory
+      - ./influxdb/data:/var/lib/influxdb
+      # Mount for influxdb configuration
+      - ./influxdb/config/:/etc/influxdb/
+  python:
+    build: python
+    image: "alpine:latest"
+    networks:
+      - tick_net
+  grafana:
+    build: grafana
+    image: "grafana:latest"
+    env_file: configuration.env
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+  kapacitor:
+    build: kapacitor
+    image: "kapacitor:latest"
+    # Kapacitor requires network access to Influxdb
+    links:
+      - influxdb
+    ports:
+      - "9092:9092" 
+    networks:
+      - tick_net
+    environment:
+      - KAPACITOR_INFLUXDB_0_URLS_0=http://influxdb:8086
+    hostname: kapacitor
+    volumes:
+      # Mount for kapacitor data directory
+      - ./kapacitor/data/:/var/lib/kapacitor 
+      # Mount for kapacitor configuration
+      - ./kapacitor/config/:/etc/kapacitor/
+    depends_on:
+      - influxdb
+      
+volumes:
+  grafana_data: {}
+  influxdb_data: {}
+  kapacitor_data: {}
+  python_dat: {}
+#  telegraf_data: {}
+  
+networks:
+  tick_net:
+    driver: bridge
