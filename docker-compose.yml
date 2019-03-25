@@ -25,6 +25,10 @@ services:
       - tick_net
     stdin_open: true
     tty: true
+    links:
+      - influxdb
+      - grafana
+      - kapacitor
   grafana:
     build: grafana
     image: "grafana:latest"
